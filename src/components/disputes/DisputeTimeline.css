@@ -1,0 +1,49 @@
+.dispute-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-event {
+  display: flex;
+  gap: 14px;
+}
+
+.timeline-event__track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.timeline-event__dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.timeline-event__line {
+  width: 1.5px;
+  flex: 1;
+  background: #D8D4C9;
+  margin: 4px 0;
+  min-height: 20px;
+}
+
+.timeline-event__content {
+  padding-bottom: 20px;
+  flex: 1;
+}
+
+.timeline-event__text {
+  font-size: 0.875rem;
+  color: #1E2A22;
+  margin: 0 0 3px;
+  line-height: 1.4;
+}
+
+.timeline-event__date {
+  font-size: 0.75rem;
+  color: #9a9a90;
+}

@@ -1,0 +1,138 @@
+.landlord-confirmation {
+  padding: 40px 48px;
+  max-width: 900px;
+}
+
+.landlord-confirmation__header {
+  margin-bottom: 36px;
+}
+
+.landlord-confirmation__title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1E2A22;
+  margin: 0 0 8px;
+}
+
+.landlord-confirmation__sub {
+  font-size: 0.9rem;
+  color: #7a7a70;
+  margin: 0;
+}
+
+.confirmation-section {
+  margin-bottom: 40px;
+}
+
+.confirmation-section__title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: #1E2A22;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #D8D4C9;
+}
+
+.confirmation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirmation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border: 1px solid #D8D4C9;
+  border-radius: 8px;
+  background: #f5f3ee;
+  gap: 16px;
+}
+
+.confirmation-item--confirmed {
+  border-color: #a8d4b4;
+  background: #f0f8f2;
+}
+
+.confirmation-item--rejected {
+  border-color: #f0c4ba;
+  background: #fdf5f3;
+}
+
+.confirmation-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.confirmation-item__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.confirmation-item__type {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1E2A22;
+}
+
+.confirmation-item__room {
+  font-size: 0.8rem;
+  color: #7a7a70;
+  margin: 0;
+}
+
+.confirmation-item__notes {
+  font-size: 0.82rem;
+  color: #4a5a4e;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.confirmation-item__date {
+  font-size: 0.75rem;
+  color: #9a9a90;
+}
+
+.confirmation-item__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.confirmation-item__status {
+  flex-shrink: 0;
+}
+
+.confirmation-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.confirmation-done--confirmed {
+  color: #2F4F3D;
+}
+
+.confirmation-done--rejected {
+  color: #B5533C;
+}
+
+@media (max-width: 768px) {
+  .landlord-confirmation {
+    padding: 24px 16px;
+  }
+
+  .confirmation-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

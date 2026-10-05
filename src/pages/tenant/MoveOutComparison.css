@@ -1,0 +1,160 @@
+.move-out-comparison {
+  padding: 40px 48px;
+  max-width: 1000px;
+}
+
+.move-out-comparison__header {
+  margin-bottom: 36px;
+}
+
+.move-out-comparison__title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1E2A22;
+  margin: 0 0 8px;
+}
+
+.move-out-comparison__sub {
+  font-size: 0.9rem;
+  color: #7a7a70;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Table */
+.comparison-table {
+  border: 1px solid #D8D4C9;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.comparison-table__header {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr 100px;
+  background: #1E2A22;
+  padding: 12px 20px;
+  gap: 16px;
+}
+
+.comparison-table__header .comparison-col {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8ec9a2;
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr 100px;
+  padding: 18px 20px;
+  gap: 16px;
+  border-bottom: 1px solid #D8D4C9;
+  background: #f5f3ee;
+  align-items: start;
+  transition: background 0.1s;
+}
+
+.comparison-row:last-child {
+  border-bottom: none;
+}
+
+.comparison-row--worse {
+  background: #fdf5f3;
+}
+
+.comparison-row--better {
+  background: #f2f8f4;
+}
+
+.comparison-room-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1E2A22;
+}
+
+.condition-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.condition-cell__date {
+  font-size: 0.75rem;
+  color: #9a9a90;
+}
+
+.condition-cell__notes {
+  font-size: 0.78rem;
+  color: #5a6a5e;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.condition-cell__photos {
+  font-size: 0.75rem;
+  color: #8a8a80;
+}
+
+.comparison-no-data {
+  font-size: 0.82rem;
+  color: #b0a898;
+  font-style: italic;
+}
+
+/* Delta */
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.delta--worse {
+  background: #f7e9e6;
+  color: #B5533C;
+}
+
+.delta--same {
+  background: #ebe8e1;
+  color: #5a5a52;
+}
+
+.delta--better {
+  background: #e8f0eb;
+  color: #2F4F3D;
+}
+
+.delta--nodata {
+  color: #b0a898;
+}
+
+@media (max-width: 900px) {
+  .move-out-comparison {
+    padding: 24px 16px;
+  }
+
+  .comparison-table__header,
+  .comparison-row {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-table__header {
+    display: none;
+  }
+
+  .comparison-row {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .comparison-col--room {
+    border-bottom: 1px solid #E0DDD6;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+}

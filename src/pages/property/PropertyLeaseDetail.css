@@ -1,0 +1,205 @@
+.property-detail {
+  padding: 40px 48px;
+  max-width: 1000px;
+}
+
+.property-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #5a6a5e;
+  text-decoration: none;
+  margin-bottom: 28px;
+}
+
+.property-back-link:hover {
+  color: #1E2A22;
+}
+
+.property-detail__header {
+  margin-bottom: 36px;
+}
+
+.property-detail__type {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8a80;
+  margin-bottom: 6px;
+}
+
+.property-detail__address {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #1E2A22;
+  margin: 0 0 12px;
+  line-height: 1.3;
+}
+
+.property-detail__badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.property-detail__floor {
+  font-size: 0.78rem;
+  color: #7a7a70;
+}
+
+.property-detail__layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  align-items: start;
+}
+
+.property-section {
+  margin-bottom: 32px;
+}
+
+.property-section:last-child {
+  margin-bottom: 0;
+}
+
+.property-section__title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: #1E2A22;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #D8D4C9;
+}
+
+.property-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #D8D4C9;
+}
+
+.property-section__head .property-section__title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.property-section__link {
+  font-size: 0.82rem;
+  color: #2F4F3D;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.property-section__empty {
+  font-size: 0.875rem;
+  color: #9a9a90;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Lease details */
+.lease-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.lease-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 18px;
+  background: #f5f3ee;
+  border: 1px solid #D8D4C9;
+  border-radius: 8px;
+}
+
+.lease-detail-item__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8a80;
+}
+
+.lease-detail-item__value {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1E2A22;
+}
+
+/* Deposit */
+.deposit-detail {
+  background: #f5f3ee;
+  border: 1px solid #D8D4C9;
+  border-radius: 8px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deposit-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #3a4a3e;
+}
+
+.deposit-detail-row--deduction {
+  color: #7a7a70;
+}
+
+.deposit-detail-row--total {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1E2A22;
+}
+
+.deposit-deduction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #B5533C;
+  font-weight: 500;
+}
+
+.deposit-detail-divider {
+  height: 1px;
+  background: #D8D4C9;
+}
+
+/* Property docs list */
+.property-docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.property-detail__sidebar .property-section {
+  background: #f5f3ee;
+  border: 1px solid #D8D4C9;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+@media (max-width: 900px) {
+  .property-detail {
+    padding: 24px 16px;
+  }
+
+  .property-detail__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lease-details {
+    grid-template-columns: 1fr;
+  }
+}
