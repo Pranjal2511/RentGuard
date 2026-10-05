@@ -18,9 +18,33 @@
   text-align: center;
 }
 
-.photo-uploader__dropzone:hover {
+.photo-uploader__dropzone:hover,
+.photo-uploader__dropzone--dragging {
   border-color: #2F4F3D;
   background: #f0ede8;
+}
+
+.photo-uploader__error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FBEAE5;
+  color: #B5533C;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.photo-uploader__previews-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-uploader__preview-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #7A7A70;
 }
 
 .photo-uploader__hint {

@@ -14,26 +14,39 @@ export default function LandlordDashboard() {
   const [maintenance, setMaintenance] = useState([]);
   const [disputes, setDisputes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
-      const props = await getProperties();
-      setProperties(props);
-      const activeProperty = props.find((p) => p.status === "active");
-      if (activeProperty) {
-        const [m, d] = await Promise.all([
-          getMaintenanceIssues(activeProperty.id),
-          getDisputes(activeProperty.id),
-        ]);
-        setMaintenance(m);
-        setDisputes(d);
+      setLoading(true);
+      setError("");
+      try {
+        const allProps = await getProperties();
+        // Landlord dashboard derives properties from landlordId
+        const landlordProps = allProps.filter((p) => p.landlordId === user?.id);
+        const activeList = landlordProps.length > 0 ? landlordProps : allProps;
+        setProperties(activeList);
+
+        const activeProperty = activeList.find((p) => p.status === "active") || activeList[0];
+        if (activeProperty) {
+          const [m, d] = await Promise.all([
+            getMaintenanceIssues(activeProperty.id),
+            getDisputes(activeProperty.id),
+          ]);
+          setMaintenance(m || []);
+          setDisputes(d || []);
+        }
+      } catch (err) {
+        console.error("Failed to load landlord dashboard data:", err);
+        setError("Unable to load landlord dashboard data. Please try again.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
-  }, []);
+  }, [user?.id]);
 
-  if (loading) return <LoadingState />;
+  if (loading) return <LoadingState message="Loading landlord dashboard…" />;
 
   const activeProps = properties.filter((p) => p.status === "active");
   const openMaintenance = maintenance.filter((m) => m.status !== "resolved");
@@ -45,8 +58,10 @@ export default function LandlordDashboard() {
         <h1 className="landlord-dashboard__greeting">
           Good day, {user?.name?.split(" ")[0]}.
         </h1>
-        <p className="landlord-dashboard__sub">Here's an overview of your properties.</p>
+        <p className="landlord-dashboard__sub">Here's an overview of your managed properties.</p>
       </div>
+
+      {error && <div className="landlord-error-banner">{error}</div>}
 
       {/* Stats bar */}
       <div className="landlord-stats-bar">
@@ -93,7 +108,7 @@ export default function LandlordDashboard() {
             {properties.map((prop) => (
               <Link
                 key={prop.id}
-                to={`/property/${prop.id}`}
+                to={`/landlord/properties/${prop.id}`}
                 className="property-list-item"
                 id={`property-${prop.id}`}
               >

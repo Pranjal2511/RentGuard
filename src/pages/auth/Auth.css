@@ -53,10 +53,24 @@
   border-color: #2F4F3D;
 }
 
+.auth-form__input--error {
+  border-color: #B5533C;
+  background: #FFF9F7;
+}
+
+.auth-field-error {
+  font-size: 0.78rem;
+  color: #B5533C;
+  margin-top: 2px;
+}
+
 .auth-form__error {
   font-size: 0.85rem;
   color: #B5533C;
   margin: 0;
+  padding: 8px 12px;
+  background: #FBEAE5;
+  border-radius: 6px;
 }
 
 .auth-form__submit {

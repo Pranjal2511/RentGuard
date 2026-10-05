@@ -33,12 +33,12 @@ export function formatRelativeDate(dateStr) {
   return `${Math.floor(diffDays / 365)} years ago`;
 }
 
+export const CONDITIONS = ["good", "fair", "damaged"];
+
 export function conditionLabel(condition) {
   const labels = {
-    excellent: "Excellent",
     good: "Good",
     fair: "Fair",
-    poor: "Poor",
     damaged: "Damaged",
   };
   return labels[condition] || condition;

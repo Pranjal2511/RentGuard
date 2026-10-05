@@ -34,6 +34,16 @@
   background: #E5E2DB;
 }
 
+.btn--outline {
+  background: transparent;
+  color: #1E2A22;
+  border: 1.5px solid #D8D4C9;
+}
+.btn--outline:hover:not(:disabled) {
+  background: #E5E2DB;
+  border-color: #2F4F3D;
+}
+
 .btn--ghost {
   background: transparent;
   color: #1E2A22;

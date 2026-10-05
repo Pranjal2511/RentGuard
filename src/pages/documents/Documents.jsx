@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { FileText, Plus, Search, Filter, UploadCloud, CheckCircle2 } from "lucide-react";
-import { getDocuments } from "../../services/api";
+import { useProperty } from "../../context/PropertyContext";
+import { useAuth } from "../../context/AuthContext";
+import { getDocuments, uploadDocument } from "../../services/api";
 import DocumentItem from "../../components/documents/DocumentItem";
 import LoadingState from "../../components/common/LoadingState";
 import EmptyState from "../../components/common/EmptyState";
@@ -17,27 +19,41 @@ const CATEGORIES = [
 ];
 
 export default function Documents() {
+  const { activeProperty } = useProperty();
+  const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [category, setCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Form state
   const [docName, setDocName] = useState("");
   const [docType, setDocType] = useState("lease");
-  const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [formError, setFormError] = useState("");
+
+  const propertyId = activeProperty?.id || "prop-001";
 
   useEffect(() => {
     async function load() {
-      // Load documents for current active property
-      const docs = await getDocuments("prop-001");
-      setDocuments(docs);
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        const docs = await getDocuments(propertyId);
+        setDocuments(docs);
+      } catch (err) {
+        console.error("Failed to load documents:", err);
+        setError("Unable to load documents. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
-  }, []);
+  }, [propertyId]);
 
   const filteredDocs = documents.filter((doc) => {
     const matchesCategory = category === "all" || doc.type === category;
@@ -50,40 +66,62 @@ export default function Documents() {
   function handleFileSelect(e) {
     const file = e.target.files?.[0];
     if (file) {
-      setFileName(file.name);
-      if (!docName) {
-        // Auto-fill friendly name
-        setDocName(file.name.replace(/\.[^/.]+$/, ""));
+      if (file.size > 15 * 1024 * 1024) {
+        setFormError("File exceeds 15MB limit.");
+        return;
+      }
+      setFormError("");
+      setSelectedFile(file);
+      if (!docName.trim()) {
+        const baseName = file.name.replace(/\.[^/.]+$/, "");
+        setDocName(baseName.replace(/[_-]/g, " "));
       }
     }
   }
 
-  function handleUploadSubmit(e) {
+  async function handleUploadSubmit(e) {
     e.preventDefault();
-    if (!docName) return;
+    if (!docName.trim()) {
+      setFormError("Please enter a document title.");
+      return;
+    }
 
-    const newDoc = {
-      id: "doc-new-" + Date.now(),
-      propertyId: "prop-001",
-      name: docName,
-      type: docType,
-      fileType: "pdf",
-      size: fileName ? "1.8 MB" : "0.9 MB",
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 1,
-      url: null,
-    };
+    setUploading(true);
+    setFormError("");
+    try {
+      const ext = selectedFile?.name ? selectedFile.name.split(".").pop().toLowerCase() : "pdf";
+      const sizeStr = selectedFile?.size
+        ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+        : "1.2 MB";
 
-    setDocuments((prev) => [newDoc, ...prev]);
-    setShowUploadModal(false);
-    setDocName("");
-    setDocType("lease");
-    setFileName("");
-    setUploadSuccess(true);
-    setTimeout(() => setUploadSuccess(false), 4000);
+      const res = await uploadDocument({
+        propertyId,
+        name: docName.trim(),
+        type: docType,
+        fileType: ext,
+        size: sizeStr,
+        uploadedBy: user?.id || 1,
+      });
+
+      if (res.document) {
+        setDocuments((prev) => [res.document, ...prev]);
+      }
+
+      setShowUploadModal(false);
+      setDocName("");
+      setDocType("lease");
+      setSelectedFile(null);
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 4000);
+    } catch (err) {
+      console.error("Failed to upload document:", err);
+      setFormError("Failed to upload document. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
-  if (loading) return <LoadingState />;
+  if (loading) return <LoadingState message="Loading documents vault…" />;
 
   return (
     <div className="documents-page">
@@ -97,7 +135,10 @@ export default function Documents() {
         </div>
         <Button
           variant="primary"
-          onClick={() => setShowUploadModal(true)}
+          onClick={() => {
+            setFormError("");
+            setShowUploadModal(true);
+          }}
           className="documents-upload-btn"
           id="upload-doc-btn"
         >
@@ -105,6 +146,8 @@ export default function Documents() {
           Upload Document
         </Button>
       </div>
+
+      {error && <div className="documents-error-banner">{error}</div>}
 
       {uploadSuccess && (
         <div className="documents-banner documents-banner--success">
@@ -119,7 +162,7 @@ export default function Documents() {
           <Search size={16} className="documents-search-icon" />
           <input
             type="text"
-            placeholder="Search documents by name or type..."
+            placeholder="Search documents by name or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="documents-search-input"
@@ -186,17 +229,23 @@ export default function Documents() {
               <Button variant="ghost" onClick={() => setShowUploadModal(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" onClick={handleUploadSubmit} disabled={!docName}>
-                Save Document
+              <Button
+                variant="primary"
+                onClick={handleUploadSubmit}
+                disabled={!docName.trim() || uploading}
+                id="submit-doc-upload"
+              >
+                {uploading ? "Saving…" : "Save Document"}
               </Button>
             </>
           }
         >
           <form className="doc-upload-form" onSubmit={handleUploadSubmit}>
+            {formError && <p className="doc-form-error">{formError}</p>}
             <div className="doc-dropzone">
               <UploadCloud size={32} className="doc-dropzone-icon" />
               <p className="doc-dropzone-title">
-                {fileName ? fileName : "Click to select or drag and drop file"}
+                {selectedFile ? selectedFile.name : "Click to select or drag and drop file"}
               </p>
               <p className="doc-dropzone-hint">PDF, PNG, JPG, or DOC up to 15MB</p>
               <input
@@ -204,6 +253,7 @@ export default function Documents() {
                 className="doc-dropzone-input"
                 onChange={handleFileSelect}
                 id="doc-file-input"
+                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
               />
             </div>
 
@@ -215,7 +265,7 @@ export default function Documents() {
                 type="text"
                 id="doc-name-input"
                 className="form-input"
-                placeholder="e.g. Signed Lease Agreement 2024"
+                placeholder="e.g. Signed Lease Agreement 2026"
                 value={docName}
                 onChange={(e) => setDocName(e.target.value)}
                 required

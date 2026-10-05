@@ -4,8 +4,23 @@ import { MessageCircle } from "lucide-react";
 import "./MaintenanceItem.css";
 
 export default function MaintenanceItem({ issue, onClick }) {
+  function handleKeyDown(e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick?.();
+    }
+  }
+
   return (
-    <div className="maintenance-item" onClick={onClick} role="button" tabIndex={0} id={`maint-${issue.id}`}>
+    <div
+      className="maintenance-item"
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      id={`maint-${issue.id}`}
+      aria-label={`View details for ${issue.title}`}
+    >
       <div className="maintenance-item__header">
         <div className="maintenance-item__title-row">
           <span className="maintenance-item__title">{issue.title}</span>

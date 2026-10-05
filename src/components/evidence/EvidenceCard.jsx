@@ -4,11 +4,28 @@ import "./EvidenceCard.css";
 
 export default function EvidenceCard({ evidence, onClick }) {
   const photoCount = evidence?.photos?.length ?? 0;
+  const firstPhoto = evidence?.photos?.[0]?.url;
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick?.();
+    }
+  }
 
   return (
-    <div className="evidence-card" onClick={onClick} role="button" tabIndex={0}>
+    <div
+      className="evidence-card"
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Evidence report: ${evidence.condition} condition, ${photoCount} photos`}
+    >
       <div className="evidence-card__photo-strip">
-        {photoCount > 0 ? (
+        {firstPhoto ? (
+          <img src={firstPhoto} alt="Evidence thumbnail" className="evidence-card__thumb" />
+        ) : photoCount > 0 ? (
           <div className="evidence-card__photo-count">
             <ImageIcon size={14} />
             <span>{photoCount} photo{photoCount !== 1 ? "s" : ""}</span>

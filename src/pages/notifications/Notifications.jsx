@@ -9,7 +9,8 @@ import {
   CheckCheck,
   ArrowRight,
 } from "lucide-react";
-import { getNotifications, markNotificationRead } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from "../../services/api";
 import { formatRelativeDate } from "../../utils/formatters";
 import LoadingState from "../../components/common/LoadingState";
 import EmptyState from "../../components/common/EmptyState";
@@ -24,28 +25,47 @@ const NOTIF_ICONS = {
 };
 
 export default function Notifications() {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // "all" | "unread"
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
-      const data = await getNotifications();
-      setNotifications(data);
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        const data = await getNotifications();
+        setNotifications(data || []);
+      } catch (err) {
+        console.error("Failed to load notifications:", err);
+        setError("Unable to load notifications. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
   async function handleMarkRead(id) {
-    await markNotificationRead(id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    try {
+      await markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (err) {
+      console.error("Failed to mark notification read:", err);
+    }
   }
 
-  function handleMarkAllRead() {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  async function handleMarkAllRead() {
+    try {
+      await markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Failed to mark all notifications read:", err);
+    }
   }
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -55,7 +75,21 @@ export default function Notifications() {
     return true;
   });
 
-  if (loading) return <LoadingState />;
+  // Resolve valid role-aware destination link
+  function resolveNotifLink(link) {
+    if (!link) return null;
+    if (user?.role === "landlord") {
+      if (link.startsWith("/tenant/disputes")) {
+        return "/landlord/confirmations";
+      }
+      if (link.startsWith("/tenant/maintenance")) {
+        return "/landlord/dashboard";
+      }
+    }
+    return link;
+  }
+
+  if (loading) return <LoadingState message="Loading notifications…" />;
 
   return (
     <div className="notifications-page">
@@ -89,17 +123,21 @@ export default function Notifications() {
         )}
       </div>
 
+      {error && <div className="notifications-error-banner">{error}</div>}
+
       {/* Filter Tabs */}
       <div className="notifications-tabs">
         <button
           className={`notif-tab ${filter === "all" ? "notif-tab--active" : ""}`}
           onClick={() => setFilter("all")}
+          id="notif-tab-all"
         >
           All Activity ({notifications.length})
         </button>
         <button
           className={`notif-tab ${filter === "unread" ? "notif-tab--active" : ""}`}
           onClick={() => setFilter("unread")}
+          id="notif-tab-unread"
         >
           Unread ({unreadCount})
         </button>
@@ -120,12 +158,12 @@ export default function Notifications() {
         ) : (
           filteredNotifications.map((notif) => {
             const Icon = NOTIF_ICONS[notif.type] || Bell;
+            const validLink = resolveNotifLink(notif.link);
 
             return (
               <div
                 key={notif.id}
                 className={`notif-card ${!notif.read ? "notif-card--unread" : ""}`}
-                onClick={() => !notif.read && handleMarkRead(notif.id)}
                 id={`notif-${notif.id}`}
               >
                 <div className={`notif-card__icon notif-card__icon--${notif.type}`}>
@@ -141,25 +179,32 @@ export default function Notifications() {
                   </div>
                   <p className="notif-card__text">{notif.body}</p>
 
-                  {notif.link && (
-                    <div className="notif-card__footer">
+                  <div className="notif-card__footer">
+                    {validLink && (
                       <Link
-                        to={notif.link}
+                        to={validLink}
                         className="notif-card__action"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMarkRead(notif.id);
-                        }}
+                        onClick={() => handleMarkRead(notif.id)}
                       >
                         <span>View details</span>
                         <ArrowRight size={13} />
                       </Link>
-                    </div>
-                  )}
+                    )}
+                    {!notif.read && (
+                      <button
+                        type="button"
+                        className="notif-card__mark-btn"
+                        onClick={() => handleMarkRead(notif.id)}
+                        aria-label="Mark notification as read"
+                      >
+                        Mark as read
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {!notif.read && (
-                  <div className="notif-card__unread-dot" title="Unread" />
+                  <div className="notif-card__unread-dot" title="Unread notification" />
                 )}
               </div>
             );

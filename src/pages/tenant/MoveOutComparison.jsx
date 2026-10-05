@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, CheckCircle2, Minus } from "lucide-react";
+import { useProperty } from "../../context/PropertyContext";
 import { getRoomsByProperty, getEvidence } from "../../services/api";
 import StatusBadge from "../../components/common/StatusBadge";
 import LoadingState from "../../components/common/LoadingState";
@@ -7,49 +8,60 @@ import EmptyState from "../../components/common/EmptyState";
 import { formatDate } from "../../utils/formatters";
 import "./MoveOutComparison.css";
 
-const PROPERTY_ID = "prop-001";
-
 export default function MoveOutComparison() {
+  const { activeProperty } = useProperty();
   const [rooms, setRooms] = useState([]);
   const [moveInMap, setMoveInMap] = useState({});
   const [moveOutMap, setMoveOutMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const propertyId = activeProperty?.id || "prop-001";
 
   useEffect(() => {
     async function load() {
-      const [r, ev] = await Promise.all([
-        getRoomsByProperty(PROPERTY_ID),
-        getEvidence(PROPERTY_ID),
-      ]);
-      setRooms(r);
+      setLoading(true);
+      setError("");
+      try {
+        const [r, ev] = await Promise.all([
+          getRoomsByProperty(propertyId),
+          getEvidence(propertyId),
+        ]);
+        setRooms(r || []);
 
-      const inMap = {};
-      const outMap = {};
-      ev.forEach((e) => {
-        if (e.type === "move-in") {
-          if (!inMap[e.roomId]) inMap[e.roomId] = e;
-        }
-        if (e.type === "move-out") {
-          if (!outMap[e.roomId]) outMap[e.roomId] = e;
-        }
-      });
-      setMoveInMap(inMap);
-      setMoveOutMap(outMap);
-      setLoading(false);
+        const inMap = {};
+        const outMap = {};
+        (ev || []).forEach((e) => {
+          if (e.type === "move-in") {
+            if (!inMap[e.roomId]) inMap[e.roomId] = e;
+          }
+          if (e.type === "move-out") {
+            if (!outMap[e.roomId]) outMap[e.roomId] = e;
+          }
+        });
+        setMoveInMap(inMap);
+        setMoveOutMap(outMap);
+      } catch (err) {
+        console.error("Failed to load move-out comparison data:", err);
+        setError("Unable to load condition comparison data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
-  }, []);
+  }, [propertyId]);
 
   function conditionDelta(inCondition, outCondition) {
-    const rank = { excellent: 4, good: 3, fair: 2, poor: 1, damaged: 0 };
+    // 3-tier consistent condition ranking
+    const rank = { good: 2, fair: 1, damaged: 0 };
     if (!outCondition) return "no-data";
-    const diff = (rank[outCondition] ?? 2) - (rank[inCondition] ?? 2);
+    const diff = (rank[outCondition] ?? 1) - (rank[inCondition] ?? 1);
     if (diff < 0) return "worse";
     if (diff > 0) return "better";
     return "same";
   }
 
-  if (loading) return <LoadingState />;
+  if (loading) return <LoadingState message="Comparing move-in and move-out records…" />;
 
   const roomsWithData = rooms.filter((r) => moveInMap[r.id]);
 
@@ -58,16 +70,18 @@ export default function MoveOutComparison() {
       <div className="move-out-comparison__header">
         <h1 className="move-out-comparison__title">Move-Out Comparison</h1>
         <p className="move-out-comparison__sub">
-          Side-by-side comparison of room conditions at move-in vs. move-out. Use this to identify
-          legitimate deductions.
+          Side-by-side comparison of room conditions at move-in vs. move-out. Use this to verify
+          legitimate wear-and-tear versus claimed damage.
         </p>
       </div>
+
+      {error && <div className="move-out-error-banner">{error}</div>}
 
       {roomsWithData.length === 0 ? (
         <EmptyState
           icon={AlertTriangle}
           title="No move-in report found"
-          description="Complete the Move-In Report first to enable comparison."
+          description="Complete the Move-In Report first to enable side-by-side comparison."
         />
       ) : (
         <div className="comparison-table">
@@ -96,7 +110,9 @@ export default function MoveOutComparison() {
                     <span className="condition-cell__date">{formatDate(inEv.createdAt)}</span>
                     {inEv.notes && <p className="condition-cell__notes">{inEv.notes}</p>}
                     {inEv.photos?.length > 0 && (
-                      <span className="condition-cell__photos">{inEv.photos.length} photo{inEv.photos.length !== 1 ? "s" : ""}</span>
+                      <span className="condition-cell__photos">
+                        {inEv.photos.length} photo{inEv.photos.length !== 1 ? "s" : ""}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -108,7 +124,9 @@ export default function MoveOutComparison() {
                       <span className="condition-cell__date">{formatDate(outEv.createdAt)}</span>
                       {outEv.notes && <p className="condition-cell__notes">{outEv.notes}</p>}
                       {outEv.photos?.length > 0 && (
-                        <span className="condition-cell__photos">{outEv.photos.length} photo{outEv.photos.length !== 1 ? "s" : ""}</span>
+                        <span className="condition-cell__photos">
+                          {outEv.photos.length} photo{outEv.photos.length !== 1 ? "s" : ""}
+                        </span>
                       )}
                     </div>
                   ) : (

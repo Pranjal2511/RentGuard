@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Building2 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 import { getProperty, getDocuments, getDepositSummary } from "../../services/api";
 import StatusBadge from "../../components/common/StatusBadge";
 import LoadingState from "../../components/common/LoadingState";
@@ -11,36 +12,53 @@ import "./PropertyLeaseDetail.css";
 
 export default function PropertyLeaseDetail() {
   const { propertyId } = useParams();
+  const { user } = useAuth();
   const [property, setProperty] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [deposit, setDeposit] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const backPath = user?.role === "landlord" ? "/landlord/properties" : "/tenant/dashboard";
+  const backLabel = user?.role === "landlord" ? "Back to properties" : "Back to dashboard";
 
   useEffect(() => {
     async function load() {
-      const [prop, docs, dep] = await Promise.all([
-        getProperty(propertyId),
-        getDocuments(propertyId),
-        getDepositSummary(propertyId),
-      ]);
-      setProperty(prop);
-      setDocuments(docs);
-      setDeposit(dep);
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        const [prop, docs, dep] = await Promise.all([
+          getProperty(propertyId),
+          getDocuments(propertyId),
+          getDepositSummary(propertyId),
+        ]);
+        setProperty(prop);
+        setDocuments(docs || []);
+        setDeposit(dep);
+      } catch (err) {
+        console.error("Failed to load property details:", err);
+        setError("Unable to load property details. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [propertyId]);
 
-  if (loading) return <LoadingState />;
+  if (loading) return <LoadingState message="Loading property details…" />;
 
-  if (!property) {
+  if (error || !property) {
     return (
       <div className="property-detail">
         <EmptyState
           icon={Building2}
           title="Property not found"
-          description="This property does not exist."
-          action={<Link to="/" className="property-back-link">← Go back</Link>}
+          description={error || "The requested property record does not exist or has been removed."}
+          action={
+            <Link to={backPath} className="property-back-link">
+              ← {backLabel}
+            </Link>
+          }
         />
       </div>
     );
@@ -48,8 +66,8 @@ export default function PropertyLeaseDetail() {
 
   return (
     <div className="property-detail">
-      <Link to="/tenant/dashboard" className="property-back-link" id="property-back">
-        <ArrowLeft size={15} /> Back to dashboard
+      <Link to={backPath} className="property-back-link" id="property-back">
+        <ArrowLeft size={15} /> {backLabel}
       </Link>
 
       <div className="property-detail__header">
@@ -91,7 +109,7 @@ export default function PropertyLeaseDetail() {
           {/* Deposit breakdown */}
           {deposit && (
             <section className="property-section">
-              <h2 className="property-section__title">Deposit Breakdown</h2>
+              <h2 className="property-section__title">Security Deposit Breakdown</h2>
               <div className="deposit-detail">
                 <div className="deposit-detail-row">
                   <span>Total Deposit Paid</span>
@@ -120,11 +138,11 @@ export default function PropertyLeaseDetail() {
         <div className="property-detail__sidebar">
           <section className="property-section">
             <div className="property-section__head">
-              <h2 className="property-section__title">Documents</h2>
-              <Link to="/documents" className="property-section__link">View all</Link>
+              <h2 className="property-section__title">Property Documents</h2>
+              <Link to="/documents" className="property-section__link">View vault</Link>
             </div>
             {documents.length === 0 ? (
-              <p className="property-section__empty">No documents shared yet.</p>
+              <p className="property-section__empty">No documents uploaded for this property yet.</p>
             ) : (
               <div className="property-docs-list">
                 {documents.map((doc) => (

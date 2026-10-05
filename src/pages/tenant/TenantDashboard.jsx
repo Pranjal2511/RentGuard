@@ -9,7 +9,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { getProperties, getMaintenanceIssues, getDisputes, getDepositSummary } from "../../services/api";
+import { useProperty } from "../../context/PropertyContext";
+import { getMaintenanceIssues, getDisputes, getDepositSummary } from "../../services/api";
 import StatusBadge from "../../components/common/StatusBadge";
 import LoadingState from "../../components/common/LoadingState";
 import { formatDate, formatCurrency } from "../../utils/formatters";
@@ -17,40 +18,53 @@ import "./TenantDashboard.css";
 
 export default function TenantDashboard() {
   const { user } = useAuth();
-  const [property, setProperty] = useState(null);
+  const { activeProperty, loading: propertyLoading } = useProperty();
   const [maintenance, setMaintenance] = useState([]);
   const [disputes, setDisputes] = useState([]);
   const [deposit, setDeposit] = useState(null);
+  const [leaseMonthsLeft, setLeaseMonthsLeft] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const property = activeProperty;
 
   useEffect(() => {
     async function loadData() {
-      const props = await getProperties();
-      const prop = props.find((p) => p.status === "active") || props[0];
-      setProperty(prop);
-
-      if (prop) {
-        const [m, d, dep] = await Promise.all([
-          getMaintenanceIssues(prop.id),
-          getDisputes(prop.id),
-          getDepositSummary(prop.id),
-        ]);
-        setMaintenance(m);
-        setDisputes(d);
-        setDeposit(dep);
+      if (!property?.id) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        if (property.leaseEnd) {
+          const end = new Date(property.leaseEnd).getTime();
+          const now = Date.now();
+          setLeaseMonthsLeft(Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24 * 30))));
+        }
+
+        const [m, d, dep] = await Promise.all([
+          getMaintenanceIssues(property.id),
+          getDisputes(property.id),
+          getDepositSummary(property.id),
+        ]);
+        setMaintenance(m || []);
+        setDisputes(d || []);
+        setDeposit(dep);
+      } catch (err) {
+        console.error("Failed to load tenant dashboard data:", err);
+        setError("Unable to load tenancy dashboard data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
-  }, []);
+  }, [property?.id, property?.leaseEnd]);
 
-  if (loading) return <LoadingState />;
+  if (propertyLoading || loading) return <LoadingState message="Loading your tenancy dashboard…" />;
 
   const openMaintenance = maintenance.filter((m) => m.status !== "resolved");
   const activeDisputes = disputes.filter((d) => d.status !== "resolved");
-  const leaseMonthsLeft = property
-    ? Math.max(0, Math.ceil((new Date(property.leaseEnd) - new Date()) / (1000 * 60 * 60 * 24 * 30)))
-    : 0;
 
   return (
     <div className="tenant-dashboard">
@@ -58,12 +72,16 @@ export default function TenantDashboard() {
       <div className="tenant-dashboard__header">
         <div>
           <h1 className="tenant-dashboard__greeting">Good day, {user?.name?.split(" ")[0]}.</h1>
-          <p className="tenant-dashboard__address">{property?.address}</p>
+          <p className="tenant-dashboard__address">{property?.address || "No active property"}</p>
         </div>
-        <Link to="/property/prop-001" className="tenant-dashboard__property-link">
-          View Property <ArrowRight size={15} />
-        </Link>
+        {property && (
+          <Link to={`/property/${property.id}`} className="tenant-dashboard__property-link">
+            View Property Details <ArrowRight size={15} />
+          </Link>
+        )}
       </div>
+
+      {error && <div className="tenant-error-banner">{error}</div>}
 
       {/* Lease status bar */}
       {property && (
@@ -112,15 +130,15 @@ export default function TenantDashboard() {
               <Wrench size={20} />
               <div>
                 <div className="quick-action__title">Maintenance</div>
-                <div className="quick-action__desc">Report an issue</div>
+                <div className="quick-action__desc">Report or view issues</div>
               </div>
               <ArrowRight size={15} className="quick-action__arrow" />
             </Link>
-            <Link to="/tenant/disputes/disp-001" id="quick-disputes" className="quick-action">
+            <Link to="/tenant/disputes" id="quick-disputes" className="quick-action">
               <Scale size={20} />
               <div>
-                <div className="quick-action__title">Disputes</div>
-                <div className="quick-action__desc">View active disputes</div>
+                <div className="quick-action__title">Disputes & Claims</div>
+                <div className="quick-action__desc">View all active claims</div>
               </div>
               <ArrowRight size={15} className="quick-action__arrow" />
             </Link>
@@ -187,6 +205,7 @@ export default function TenantDashboard() {
         <section className="dashboard-card">
           <div className="dashboard-card__head">
             <h2 className="dashboard-card__title">Active Disputes</h2>
+            <Link to="/tenant/disputes" className="dashboard-card__link">View all</Link>
           </div>
           {activeDisputes.length === 0 ? (
             <div className="dashboard-card__empty">

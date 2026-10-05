@@ -10,12 +10,15 @@ function getPageTitle(pathname) {
   if (pathname.includes("/tenant/move-in")) return "Move-In Report";
   if (pathname.includes("/tenant/move-out")) return "Move-Out";
   if (pathname.includes("/tenant/maintenance")) return "Maintenance";
-  if (pathname.includes("/tenant/disputes")) return "Dispute Detail";
+  if (pathname.match(/\/tenant\/disputes\/.+/)) return "Dispute Detail";
+  if (pathname.includes("/tenant/disputes")) return "Disputes & Claims";
   if (pathname.includes("/landlord/dashboard")) return "Dashboard";
   if (pathname.includes("/landlord/confirmations")) return "Confirmations";
-  if (pathname.includes("/property")) return "Property";
+  if (pathname.includes("/landlord/properties")) return "Properties";
+  if (pathname.includes("/property")) return "Property Details";
   if (pathname.includes("/notifications")) return "Notifications";
-  if (pathname.includes("/documents")) return "Documents";
+  if (pathname.includes("/documents")) return "Documents Vault";
+  if (pathname.includes("/settings")) return "Settings";
   return "RentGuard";
 }
 

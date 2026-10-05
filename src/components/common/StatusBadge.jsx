@@ -11,11 +11,9 @@ const statusConfig = {
   open: { label: "Open", className: "badge--disputed" },
   in_progress: { label: "In Progress", className: "badge--pending" },
 
-  // Condition
-  excellent: { label: "Excellent", className: "badge--confirmed" },
+  // Condition (consistent 3 states)
   good: { label: "Good", className: "badge--confirmed" },
   fair: { label: "Fair", className: "badge--pending" },
-  poor: { label: "Poor", className: "badge--disputed" },
   damaged: { label: "Damaged", className: "badge--disputed" },
 
   // Lease

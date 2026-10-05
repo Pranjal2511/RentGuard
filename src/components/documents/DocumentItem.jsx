@@ -1,4 +1,5 @@
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Check } from "lucide-react";
+import { useState } from "react";
 import { formatDate } from "../../utils/formatters";
 import "./DocumentItem.css";
 
@@ -10,6 +11,50 @@ const TYPE_LABELS = {
 };
 
 export default function DocumentItem({ document }) {
+  const [downloaded, setDownloaded] = useState(false);
+
+  function handleDownload() {
+    try {
+      let downloadUrl = document.url;
+      let shouldRevoke = false;
+
+      if (!downloadUrl) {
+        // Create an authentic browser-downloadable text/pdf mock artifact
+        const content = `RentGuard Verified Document
+Title: ${document.name}
+Category: ${TYPE_LABELS[document.type] || document.type}
+Property ID: ${document.propertyId}
+Date Uploaded: ${document.uploadedAt}
+Size: ${document.size}
+Verification: Verified cryptographically on RentGuard Prototype Vault.
+`;
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        downloadUrl = URL.createObjectURL(blob);
+        shouldRevoke = true;
+      }
+
+      const link = window.document.createElement("a");
+      link.href = downloadUrl;
+      const extension = document.fileType || "pdf";
+      const filename = document.name.endsWith(`.${extension}`)
+        ? document.name
+        : `${document.name}.${extension}`;
+      link.download = filename;
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+
+      if (shouldRevoke) {
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+      }
+
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2500);
+    } catch (err) {
+      console.error("Failed to download document:", err);
+    }
+  }
+
   return (
     <div className="document-item" id={`doc-${document.id}`}>
       <div className="document-item__icon">
@@ -26,12 +71,14 @@ export default function DocumentItem({ document }) {
         </div>
       </div>
       <button
+        type="button"
         className="document-item__download"
-        onClick={() => console.log("Download", document.id)}
+        onClick={handleDownload}
         aria-label={`Download ${document.name}`}
+        title={`Download ${document.name}`}
         id={`download-${document.id}`}
       >
-        <Download size={15} />
+        {downloaded ? <Check size={15} color="#2F4F3D" /> : <Download size={15} />}
       </button>
     </div>
   );

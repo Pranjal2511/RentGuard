@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useProperty } from "../../context/PropertyContext";
+import { useAuth } from "../../context/AuthContext";
 import { getRoomsByProperty, getEvidence, uploadEvidence } from "../../services/api";
 import PhotoUploader from "../../components/evidence/PhotoUploader";
 import StatusBadge from "../../components/common/StatusBadge";
@@ -7,43 +9,55 @@ import Modal from "../../components/common/Modal";
 import Button from "../../components/common/Button";
 import LoadingState from "../../components/common/LoadingState";
 import EmptyState from "../../components/common/EmptyState";
-import { formatDate } from "../../utils/formatters";
+import { formatDate, CONDITIONS } from "../../utils/formatters";
 import "./MoveInReport.css";
 
-const CONDITIONS = ["excellent", "good", "fair", "poor", "damaged"];
-const PROPERTY_ID = "prop-001"; // Temporary: replace with user's active property
-
 export default function MoveInReport() {
+  const { activeProperty } = useProperty();
+  const { user } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [evidenceMap, setEvidenceMap] = useState({}); // roomId -> evidence[]
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   // Form state for new evidence entry
   const [condition, setCondition] = useState("good");
   const [notes, setNotes] = useState("");
   const [photos, setPhotos] = useState([]);
 
+  const propertyId = activeProperty?.id || "prop-001";
+
   useEffect(() => {
     async function load() {
-      const [r, ev] = await Promise.all([
-        getRoomsByProperty(PROPERTY_ID),
-        getEvidence(PROPERTY_ID),
-      ]);
-      setRooms(r);
-      // Build a map: roomId -> move-in evidence array
-      const map = {};
-      ev.filter((e) => e.type === "move-in").forEach((e) => {
-        if (!map[e.roomId]) map[e.roomId] = [];
-        map[e.roomId].push(e);
-      });
-      setEvidenceMap(map);
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        const [r, ev] = await Promise.all([
+          getRoomsByProperty(propertyId),
+          getEvidence(propertyId),
+        ]);
+        setRooms(r || []);
+        // Build a map: roomId -> move-in evidence array
+        const map = {};
+        (ev || [])
+          .filter((e) => e.type === "move-in")
+          .forEach((e) => {
+            if (!map[e.roomId]) map[e.roomId] = [];
+            map[e.roomId].push(e);
+          });
+        setEvidenceMap(map);
+      } catch (err) {
+        console.error("Failed to load move-in report:", err);
+        setError("Unable to load move-in inspection data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
-  }, []);
+  }, [propertyId]);
 
   function openModal(room) {
     setSelectedRoom(room);
@@ -56,34 +70,34 @@ export default function MoveInReport() {
   async function handleSave() {
     if (!selectedRoom) return;
     setSaving(true);
-    await uploadEvidence({
-      propertyId: PROPERTY_ID,
-      roomId: selectedRoom.id,
-      type: "move-in",
-      condition,
-      notes,
-      photos,
-    });
-    // Optimistically update UI
-    setEvidenceMap((prev) => ({
-      ...prev,
-      [selectedRoom.id]: [
-        ...(prev[selectedRoom.id] || []),
-        {
-          id: "ev-opt-" + Date.now(),
-          roomId: selectedRoom.id,
-          condition,
-          notes,
-          photos: photos.map((f, i) => ({ id: `ph-opt-${i}`, url: null, caption: f.name })),
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    }));
-    setSaving(false);
-    setShowModal(false);
+    try {
+      const res = await uploadEvidence({
+        propertyId,
+        roomId: selectedRoom.id,
+        type: "move-in",
+        condition,
+        notes,
+        photos,
+        createdBy: user?.id || 1,
+      });
+
+      const newEv = res.evidence;
+      setEvidenceMap((prev) => ({
+        ...prev,
+        [selectedRoom.id]: [
+          ...(prev[selectedRoom.id] || []),
+          newEv,
+        ],
+      }));
+      setShowModal(false);
+    } catch (err) {
+      console.error("Failed to upload evidence:", err);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  if (loading) return <LoadingState />;
+  if (loading) return <LoadingState message="Loading move-in condition report…" />;
 
   const completedRooms = rooms.filter((r) => evidenceMap[r.id]?.length > 0).length;
 
@@ -93,8 +107,7 @@ export default function MoveInReport() {
         <div>
           <h1 className="move-in-report__title">Move-In Report</h1>
           <p className="move-in-report__sub">
-            Document the condition of each room at move-in. Photos and notes create a legally
-            useful record.
+            Document the condition of each room at move-in. Photos and notes create a tamper-evident record.
           </p>
         </div>
         <div className="move-in-report__progress">
@@ -105,8 +118,13 @@ export default function MoveInReport() {
         </div>
       </div>
 
+      {error && <div className="move-in-error-banner">{error}</div>}
+
       {rooms.length === 0 ? (
-        <EmptyState title="No rooms found" description="Add rooms to your property to begin documenting." />
+        <EmptyState
+          title="No rooms found"
+          description="There are no rooms listed for this property yet."
+        />
       ) : (
         <div className="move-in-report__rooms">
           {rooms.map((room) => {
@@ -156,8 +174,15 @@ export default function MoveInReport() {
           onClose={() => setShowModal(false)}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleSave} disabled={saving} id="save-evidence">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                disabled={saving}
+                id="save-evidence"
+              >
                 {saving ? "Saving…" : "Save Report"}
               </Button>
             </>
@@ -169,6 +194,7 @@ export default function MoveInReport() {
               <div className="condition-selector">
                 {CONDITIONS.map((c) => (
                   <button
+                    type="button"
                     key={c}
                     className={`condition-btn ${condition === c ? "condition-btn--active" : ""}`}
                     onClick={() => setCondition(c)}
@@ -181,7 +207,9 @@ export default function MoveInReport() {
             </div>
 
             <div className="evidence-form__group">
-              <label htmlFor="evidence-notes" className="evidence-form__label">Notes</label>
+              <label htmlFor="evidence-notes" className="evidence-form__label">
+                Notes
+              </label>
               <textarea
                 id="evidence-notes"
                 className="evidence-form__textarea"

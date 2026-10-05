@@ -184,6 +184,21 @@
 .notif-card__footer {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.notif-card__mark-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.notif-card__mark-btn:hover {
+  color: var(--color-primary);
 }
 
 .notif-card__action {

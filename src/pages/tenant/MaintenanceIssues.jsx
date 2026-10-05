@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wrench, Plus } from "lucide-react";
+import { useProperty } from "../../context/PropertyContext";
+import { useAuth } from "../../context/AuthContext";
 import { getMaintenanceIssues, createMaintenanceIssue, addMaintenanceComment } from "../../services/api";
 import MaintenanceItem from "../../components/maintenance/MaintenanceItem";
 import MaintenanceFilters from "../../components/maintenance/MaintenanceFilters";
@@ -11,13 +13,15 @@ import StatusBadge from "../../components/common/StatusBadge";
 import { formatDate } from "../../utils/formatters";
 import "./MaintenanceIssues.css";
 
-const PROPERTY_ID = "prop-001";
 const CATEGORIES = ["plumbing", "electrical", "structural", "appliances", "pest", "general"];
 const PRIORITIES = ["high", "medium", "low"];
 
 export default function MaintenanceIssues() {
+  const { activeProperty } = useProperty();
+  const { user } = useAuth();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Filters
   const [statusFilter, setStatusFilter] = useState("all");
@@ -26,20 +30,32 @@ export default function MaintenanceIssues() {
   // Detail modal
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [commentText, setCommentText] = useState("");
+  const [commenting, setCommenting] = useState(false);
 
   // New issue modal
   const [showNewModal, setShowNewModal] = useState(false);
   const [newForm, setNewForm] = useState({ title: "", description: "", category: "general", priority: "medium" });
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const propertyId = activeProperty?.id || "prop-001";
 
   useEffect(() => {
     async function load() {
-      const data = await getMaintenanceIssues(PROPERTY_ID);
-      setIssues(data);
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        const data = await getMaintenanceIssues(propertyId);
+        setIssues(data);
+      } catch (err) {
+        console.error("Failed to load maintenance issues:", err);
+        setError("Unable to load maintenance issues. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
-  }, []);
+  }, [propertyId]);
 
   const filtered = issues.filter((i) => {
     const matchStatus = statusFilter === "all" || i.status === statusFilter;
@@ -47,51 +63,64 @@ export default function MaintenanceIssues() {
     return matchStatus && matchPriority;
   });
 
-  async function handleCreate() {
-    if (!newForm.title.trim()) return;
+  async function handleCreate(e) {
+    e?.preventDefault();
+    if (!newForm.title.trim()) {
+      setFormError("Please enter an issue title.");
+      return;
+    }
     setSaving(true);
-    await createMaintenanceIssue({ ...newForm, propertyId: PROPERTY_ID });
-    // Optimistic update
-    setIssues((prev) => [
-      {
-        id: "maint-opt-" + Date.now(),
+    setFormError("");
+    try {
+      const res = await createMaintenanceIssue({
         ...newForm,
-        propertyId: PROPERTY_ID,
-        status: "open",
-        reportedAt: new Date().toISOString(),
-        reportedBy: 1,
-        assignedTo: null,
-        resolvedAt: null,
-        comments: [],
-      },
-      ...prev,
-    ]);
-    setSaving(false);
-    setShowNewModal(false);
-    setNewForm({ title: "", description: "", category: "general", priority: "medium" });
+        propertyId,
+        reportedBy: user?.id || 1,
+      });
+
+      if (res.issue) {
+        setIssues((prev) => [res.issue, ...prev]);
+      }
+      setShowNewModal(false);
+      setNewForm({ title: "", description: "", category: "general", priority: "medium" });
+    } catch (err) {
+      console.error("Failed to create maintenance issue:", err);
+      setFormError("Unable to report maintenance issue. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleComment() {
     if (!commentText.trim() || !selectedIssue) return;
-    await addMaintenanceComment(selectedIssue.id, commentText);
-    const newComment = {
-      id: "c-opt-" + Date.now(),
-      userId: 1,
-      userName: "You",
-      text: commentText,
-      createdAt: new Date().toISOString(),
-    };
-    // Update issue in state
-    setIssues((prev) =>
-      prev.map((i) =>
-        i.id === selectedIssue.id ? { ...i, comments: [...(i.comments || []), newComment] } : i
-      )
-    );
-    setSelectedIssue((prev) => ({ ...prev, comments: [...(prev.comments || []), newComment] }));
-    setCommentText("");
+    setCommenting(true);
+    try {
+      const commentPayload = {
+        userId: user?.id || 1,
+        userName: user?.name || "You",
+        text: commentText.trim(),
+      };
+      const res = await addMaintenanceComment(selectedIssue.id, commentPayload);
+      const newComment = res.comment;
+
+      setIssues((prev) =>
+        prev.map((i) =>
+          i.id === selectedIssue.id ? { ...i, comments: [...(i.comments || []), newComment] } : i
+        )
+      );
+      setSelectedIssue((prev) => ({
+        ...prev,
+        comments: [...(prev.comments || []), newComment],
+      }));
+      setCommentText("");
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    } finally {
+      setCommenting(false);
+    }
   }
 
-  if (loading) return <LoadingState />;
+  if (loading) return <LoadingState message="Loading maintenance issues…" />;
 
   return (
     <div className="maintenance-issues">
@@ -102,10 +131,19 @@ export default function MaintenanceIssues() {
             Track and report maintenance issues for your property.
           </p>
         </div>
-        <Button variant="primary" onClick={() => setShowNewModal(true)} id="report-issue-btn">
+        <Button
+          variant="primary"
+          onClick={() => {
+            setFormError("");
+            setShowNewModal(true);
+          }}
+          id="report-issue-btn"
+        >
           <Plus size={16} /> Report Issue
         </Button>
       </div>
+
+      {error && <div className="maintenance-error-banner">{error}</div>}
 
       <MaintenanceFilters
         status={statusFilter}
@@ -118,7 +156,11 @@ export default function MaintenanceIssues() {
         <EmptyState
           icon={Wrench}
           title="No issues found"
-          description="No maintenance issues match the current filters."
+          description={
+            statusFilter !== "all" || priorityFilter !== "all"
+              ? "No maintenance issues match the selected filters."
+              : "No maintenance issues have been reported for this tenancy."
+          }
         />
       ) : (
         <div className="maintenance-issues__list">
@@ -126,7 +168,10 @@ export default function MaintenanceIssues() {
             <MaintenanceItem
               key={issue.id}
               issue={issue}
-              onClick={() => { setSelectedIssue(issue); setCommentText(""); }}
+              onClick={() => {
+                setSelectedIssue(issue);
+                setCommentText("");
+              }}
             />
           ))}
         </div>
@@ -166,13 +211,19 @@ export default function MaintenanceIssues() {
               <textarea
                 className="comment-compose__input"
                 rows={2}
-                placeholder="Add a comment…"
+                placeholder="Add a comment or follow-up note…"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 id="maintenance-comment-input"
               />
-              <Button variant="primary" size="sm" onClick={handleComment} id="submit-comment">
-                Send
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleComment}
+                disabled={commenting || !commentText.trim()}
+                id="submit-comment"
+              >
+                {commenting ? "Sending…" : "Send"}
               </Button>
             </div>
           </div>
@@ -186,16 +237,26 @@ export default function MaintenanceIssues() {
           onClose={() => setShowNewModal(false)}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setShowNewModal(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleCreate} disabled={saving} id="create-issue-submit">
+              <Button variant="secondary" onClick={() => setShowNewModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleCreate}
+                disabled={saving || !newForm.title.trim()}
+                id="create-issue-submit"
+              >
                 {saving ? "Submitting…" : "Submit Issue"}
               </Button>
             </>
           }
         >
-          <div className="new-issue-form">
+          <form className="new-issue-form" onSubmit={handleCreate}>
+            {formError && <p className="form-error-msg">{formError}</p>}
             <div className="form-group">
-              <label htmlFor="issue-title" className="form-label">Title</label>
+              <label htmlFor="issue-title" className="form-label">
+                Title
+              </label>
               <input
                 id="issue-title"
                 type="text"
@@ -203,22 +264,27 @@ export default function MaintenanceIssues() {
                 placeholder="Brief description of the issue"
                 value={newForm.title}
                 onChange={(e) => setNewForm((p) => ({ ...p, title: e.target.value }))}
+                required
               />
             </div>
             <div className="form-group">
-              <label htmlFor="issue-desc" className="form-label">Description</label>
+              <label htmlFor="issue-desc" className="form-label">
+                Description
+              </label>
               <textarea
                 id="issue-desc"
                 className="form-input form-input--textarea"
                 rows={3}
-                placeholder="Detailed description…"
+                placeholder="Detailed description of the issue..."
                 value={newForm.description}
                 onChange={(e) => setNewForm((p) => ({ ...p, description: e.target.value }))}
               />
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="issue-category" className="form-label">Category</label>
+                <label htmlFor="issue-category" className="form-label">
+                  Category
+                </label>
                 <select
                   id="issue-category"
                   className="form-input"
@@ -226,12 +292,16 @@ export default function MaintenanceIssues() {
                   onChange={(e) => setNewForm((p) => ({ ...p, category: e.target.value }))}
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                    <option key={c} value={c}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label htmlFor="issue-priority" className="form-label">Priority</label>
+                <label htmlFor="issue-priority" className="form-label">
+                  Priority
+                </label>
                 <select
                   id="issue-priority"
                   className="form-input"
@@ -239,12 +309,14 @@ export default function MaintenanceIssues() {
                   onChange={(e) => setNewForm((p) => ({ ...p, priority: e.target.value }))}
                 >
                   {PRIORITIES.map((p) => (
-                    <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                    <option key={p} value={p}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </option>
                   ))}
                 </select>
               </div>
             </div>
-          </div>
+          </form>
         </Modal>
       )}
     </div>

@@ -10,6 +10,7 @@ import {
   Building2,
   LogOut,
   ShieldCheck,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "./Sidebar.css";
@@ -19,33 +20,48 @@ const tenantNav = [
   { to: "/tenant/move-in", icon: ClipboardList, label: "Move-In Report" },
   { to: "/tenant/move-out", icon: ArrowLeftRight, label: "Move-Out" },
   { to: "/tenant/maintenance", icon: Wrench, label: "Maintenance" },
-  { to: "/tenant/disputes/disp-001", icon: Scale, label: "Disputes" },
+  { to: "/tenant/disputes", icon: Scale, label: "Disputes" },
   { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/documents", icon: FileText, label: "Documents" },
+  { to: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
 const landlordNav = [
   { to: "/landlord/dashboard", icon: Home, label: "Dashboard" },
   { to: "/landlord/confirmations", icon: ClipboardList, label: "Confirmations" },
-  { to: "/property/prop-001", icon: Building2, label: "Properties" },
+  { to: "/landlord/properties", icon: Building2, label: "Properties" },
   { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/documents", icon: FileText, label: "Documents" },
+  { to: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
 export default function Sidebar({ mobileOpen, onClose }) {
   const { user, logout, switchRole } = useAuth();
   const navigate = useNavigate();
   const navItems = user?.role === "landlord" ? landlordNav : tenantNav;
+  const isDev = Boolean(import.meta.env.DEV);
 
   function handleLogout() {
     logout();
     navigate("/login");
   }
 
+  function handleRoleSwitch(role) {
+    switchRole(role);
+    navigate(role === "landlord" ? "/landlord/dashboard" : "/tenant/dashboard");
+  }
+
   return (
     <>
-      {mobileOpen && <div className="sidebar-overlay" onClick={onClose} />}
-      <aside className={`sidebar ${mobileOpen ? "sidebar--open" : ""}`}>
+      {mobileOpen && (
+        <button
+          type="button"
+          className="sidebar-overlay"
+          onClick={onClose}
+          aria-label="Close navigation sidebar overlay"
+        />
+      )}
+      <aside className={`sidebar ${mobileOpen ? "sidebar--open" : ""}`} aria-label="Main sidebar">
         {/* Brand */}
         <div className="sidebar__brand">
           <ShieldCheck size={22} className="sidebar__brand-icon" />
@@ -84,29 +100,33 @@ export default function Sidebar({ mobileOpen, onClose }) {
 
         <div className="sidebar__spacer" />
 
-        {/* Role switcher for prototype demo */}
-        <div className="sidebar__role-switcher">
-          <span className="sidebar__role-label">Demo: Switch role</span>
-          <div className="sidebar__role-buttons">
-            <button
-              className={`sidebar__role-btn ${user?.role === "tenant" ? "sidebar__role-btn--active" : ""}`}
-              onClick={() => { switchRole("tenant"); navigate("/tenant/dashboard"); }}
-            >
-              Tenant
-            </button>
-            <button
-              className={`sidebar__role-btn ${user?.role === "landlord" ? "sidebar__role-btn--active" : ""}`}
-              onClick={() => { switchRole("landlord"); navigate("/landlord/dashboard"); }}
-            >
-              Landlord
-            </button>
+        {/* Development-only role switcher */}
+        {isDev && (
+          <div className="sidebar__role-switcher">
+            <span className="sidebar__role-label">Dev: Switch Role</span>
+            <div className="sidebar__role-buttons">
+              <button
+                type="button"
+                className={`sidebar__role-btn ${user?.role === "tenant" ? "sidebar__role-btn--active" : ""}`}
+                onClick={() => handleRoleSwitch("tenant")}
+              >
+                Tenant
+              </button>
+              <button
+                type="button"
+                className={`sidebar__role-btn ${user?.role === "landlord" ? "sidebar__role-btn--active" : ""}`}
+                onClick={() => handleRoleSwitch("landlord")}
+              >
+                Landlord
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="sidebar__divider" />
 
         {/* Logout */}
-        <button className="sidebar__logout" onClick={handleLogout}>
+        <button type="button" className="sidebar__logout" onClick={handleLogout}>
           <LogOut size={16} />
           <span>Log Out</span>
         </button>
