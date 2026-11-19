@@ -1,30 +1,26 @@
 {
-  "name": "rent-project",
+  "name": "rentguard",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "description": "RentGuard — Smart Rental Property Documentation and Dispute Management Platform",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "ai-service"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
-    "test": "vitest run",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "lucide-react": "^1.52.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.4"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
-    "@vitejs/plugin-react": "^6.1.1",
-    "jsdom": "^30.1.2",
-    "oxlint": "^1.81.0",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.3"
+    "dev": "npm run dev:frontend",
+    "dev:ai": "npm run dev --workspace ai-service",
+    "start:ai": "npm run start --workspace ai-service",
+    "test": "npm run test --workspaces --if-present",
+    "test:ai": "npm run test --workspace ai-service",
+    "build": "npm run build:frontend",
+    "lint": "npm run lint --workspace frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "seed": "npm run seed --prefix backend",
+    "test:frontend": "npm run test --prefix frontend",
+    "test:backend": "npm run test --prefix backend",
+    "build:frontend": "npm run build --prefix frontend"
   }
 }
