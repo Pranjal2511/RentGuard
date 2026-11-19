@@ -1,0 +1,336 @@
+.tenant-dashboard {
+  padding: 40px 48px;
+  max-width: 1100px;
+}
+
+.tenant-dashboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tenant-dashboard__greeting {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1E2A22;
+  margin: 0 0 6px;
+}
+
+.tenant-dashboard__address {
+  font-size: 0.9rem;
+  color: #7a7a70;
+  margin: 0;
+}
+
+.tenant-dashboard__property-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #2F4F3D;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  margin-top: 6px;
+}
+
+.tenant-dashboard__property-link:hover {
+  text-decoration: underline;
+}
+
+/* Lease bar */
+.tenant-dashboard__lease-bar {
+  display: flex;
+  gap: 0;
+  border: 1px solid #D8D4C9;
+  border-radius: 10px;
+  background: #f5f3ee;
+  margin-bottom: 36px;
+  overflow: hidden;
+}
+
+.lease-stat {
+  flex: 1;
+  padding: 18px 24px;
+  border-right: 1px solid #D8D4C9;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lease-stat:last-child {
+  border-right: none;
+}
+
+.lease-stat__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8a80;
+  font-weight: 500;
+}
+
+.lease-stat__value {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1E2A22;
+}
+
+/* Grid */
+.tenant-dashboard__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Dashboard cards */
+.dashboard-card {
+  background: #f5f3ee;
+  border: 1px solid #D8D4C9;
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.dashboard-card--actions {
+  grid-column: 1 / -1;
+}
+
+.dashboard-card__title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1E2A22;
+  margin: 0 0 16px;
+}
+
+.dashboard-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.dashboard-card__head .dashboard-card__title {
+  margin: 0;
+}
+
+.dashboard-card__link {
+  font-size: 0.82rem;
+  color: #2F4F3D;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.dashboard-card__link:hover {
+  text-decoration: underline;
+}
+
+.dashboard-card__empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7a7a70;
+  font-size: 0.875rem;
+  padding: 16px 0;
+}
+
+/* Quick actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #EDEBE6;
+  border: 1px solid #D8D4C9;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #1E2A22;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.quick-action:hover {
+  border-color: #2F4F3D;
+  background: #eae8e2;
+}
+
+.quick-action svg:first-child {
+  color: #2F4F3D;
+  flex-shrink: 0;
+}
+
+.quick-action__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1E2A22;
+}
+
+.quick-action__desc {
+  font-size: 0.75rem;
+  color: #7a7a70;
+  margin-top: 2px;
+}
+
+.quick-action__arrow {
+  margin-left: auto;
+  color: #C4C0B5;
+  flex-shrink: 0;
+}
+
+/* Deposit */
+.deposit-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deposit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #3a4a3e;
+}
+
+.deposit-row--deduction {
+  color: #7a7a70;
+}
+
+.deposit-row--total {
+  font-weight: 600;
+  color: #1E2A22;
+}
+
+.deposit-row__amount {
+  font-weight: 500;
+}
+
+.deposit-row__amount--deduction {
+  color: #B5533C;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deposit-row__amount--total {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: #2F4F3D;
+}
+
+.deposit-divider {
+  height: 1px;
+  background: #D8D4C9;
+}
+
+/* Issue list */
+.issue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.issue-item {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #E8E5DE;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issue-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.issue-item__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.issue-item__title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1E2A22;
+  line-height: 1.4;
+}
+
+.issue-item__link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1E2A22;
+  text-decoration: none;
+}
+
+.issue-item__link:hover {
+  text-decoration: underline;
+}
+
+.issue-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #8a8a80;
+}
+
+.issue-item__date {
+  margin-left: auto;
+}
+
+.text-confirmed {
+  color: #2F4F3D;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .tenant-dashboard {
+    padding: 32px 24px;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .tenant-dashboard {
+    padding: 24px 16px;
+  }
+
+  .tenant-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tenant-dashboard__lease-bar {
+    flex-wrap: wrap;
+  }
+
+  .lease-stat {
+    min-width: 50%;
+    box-sizing: border-box;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-card--actions {
+    grid-column: 1;
+  }
+}
