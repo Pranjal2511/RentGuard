@@ -1,0 +1,30 @@
+.badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.badge--confirmed {
+  background: #e8f0eb;
+  color: #2F4F3D;
+}
+
+.badge--disputed {
+  background: #f7e9e6;
+  color: #B5533C;
+}
+
+.badge--pending {
+  background: #f8f0e0;
+  color: #C98A2C;
+}
+
+.badge--muted {
+  background: #ebe8e1;
+  color: #5a5a52;
+}
